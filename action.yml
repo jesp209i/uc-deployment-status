@@ -1,0 +1,19 @@
+---
+name: Get Deployment Status
+description: Hello
+inputs:
+  project-alias:
+    description: the project alias for the project you are running a deployment on
+    required: true
+  deployment-id:
+    description: id linked to the deployemt you want to get status on
+    required: true
+  api-key:
+    description: key needed to have access to api
+    required: true
+outputs:
+  progress-message:
+    description: How far we are along
+runs:
+  using: node16
+  main: action/index.js
