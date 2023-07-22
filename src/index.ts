@@ -11,7 +11,10 @@ async function run()
 
     const url = `https://api-internal.umbraco.io/projects/${projectAlias}/deployments/${deploymentId}`
 
-    var interval = await setInterval( async () =>
+    let interval: NodeJS.Timer;
+    let timeout: NodeJS.Timer;
+
+    interval = await setInterval( async () =>
     {
         const statusResponse = await getStatusFromApi(url,apiKey);
         writeCurrentProgress(statusResponse);
@@ -20,18 +23,20 @@ async function run()
         {
             info("Deployment Completed");
             clearInterval(interval);
+            clearTimeout(timeout);
         }
         if (statusResponse.deploymentState === 'Failed')
         {
             info('Deployment Failed');
-            info(`Cloud Deployment Messages: ${statusResponse.updateMessage}`);
+            info(`Cloud Deployment Messages:\n${statusResponse.updateMessage}`);
             setFailed("Deployment Failed");
             clearInterval(interval);
+            clearTimeout(timeout);
         }
 
     }, 15000);
     
-    setTimeout(() => {
+    timeout = setTimeout(() => {
         clearInterval(interval);
         info("\n------------------------------------\n-- Timeout reached, exiting loop");
         setFailed("Deployment reached timeout");
@@ -59,8 +64,12 @@ async function getStatusFromApi(callUrl: string, apiKey: string): Promise<Respon
 }
 
 function writeCurrentProgress(statusResponse: Response){
+
+    const updateMessages = statusResponse.updateMessage.split('\n');
+    const latestMessage = updateMessages.pop();
+
     info(`Current Status: ${statusResponse.deploymentState}`);
-    info(`Modified: ${statusResponse.lastModified} - Latest message: ${statusResponse.updateMessage}`);
+    info(`Modified: ${statusResponse.lastModified} - Latest message: ${latestMessage}`);
     info("\n");
     info("--------------------------------- Sleeping for 15 seconds --");
 }

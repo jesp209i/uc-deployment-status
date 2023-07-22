@@ -2216,21 +2216,26 @@ async function run() {
   const apiKey = (0, import_core.getInput)("api-key");
   const timeoutSeconds = (0, import_core.getInput)("timeout-seconds");
   const url = `https://api-internal.umbraco.io/projects/${projectAlias}/deployments/${deploymentId}`;
-  var interval = await setInterval(async () => {
+  let interval;
+  let timeout;
+  interval = await setInterval(async () => {
     const statusResponse = await getStatusFromApi(url, apiKey);
     writeCurrentProgress(statusResponse);
     if (statusResponse.deploymentState === "Completed") {
       (0, import_core.info)("Deployment Completed");
       clearInterval(interval);
+      clearTimeout(timeout);
     }
     if (statusResponse.deploymentState === "Failed") {
       (0, import_core.info)("Deployment Failed");
-      (0, import_core.info)(`Cloud Deployment Messages: ${statusResponse.updateMessage}`);
+      (0, import_core.info)(`Cloud Deployment Messages:
+${statusResponse.updateMessage}`);
       (0, import_core.setFailed)("Deployment Failed");
       clearInterval(interval);
+      clearTimeout(timeout);
     }
   }, 15e3);
-  setTimeout(() => {
+  timeout = setTimeout(() => {
     clearInterval(interval);
     (0, import_core.info)("\n------------------------------------\n-- Timeout reached, exiting loop");
     (0, import_core.setFailed)("Deployment reached timeout");
@@ -2250,8 +2255,10 @@ async function getStatusFromApi(callUrl, apiKey) {
   return Promise.reject(`Unexpected response coming from server. ${response.statusCode} - ${response.result} `);
 }
 function writeCurrentProgress(statusResponse) {
+  const updateMessages = statusResponse.updateMessage.split("\n");
+  const latestMessage = updateMessages.pop();
   (0, import_core.info)(`Current Status: ${statusResponse.deploymentState}`);
-  (0, import_core.info)(`Modified: ${statusResponse.lastModified} - Latest message: ${statusResponse.updateMessage}`);
+  (0, import_core.info)(`Modified: ${statusResponse.lastModified} - Latest message: ${latestMessage}`);
   (0, import_core.info)("\n");
   (0, import_core.info)("--------------------------------- Sleeping for 15 seconds --");
 }
