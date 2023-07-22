@@ -11,9 +11,11 @@ inputs:
   api-key:
     description: key needed to have access to api
     required: true
-outputs:
-  progress-message:
-    description: How far we are along
+  timeout-seconds:
+    description: number of seconds to be running before hitting a timeout-seconds
+    required: false
+    default: '60'
+  
 runs:
   using: node16
   main: action/index.js

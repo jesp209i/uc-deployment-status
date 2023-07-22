@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "esbuild src/index.ts --bundle --outfile=action/index.js --platform=node"
   },
   "repository": {
     "type": "git",
@@ -19,6 +20,11 @@
   "homepage": "https://github.com/jesp209i/uc-deployment-status#readme",
   "dependencies": {
     "@actions/core": "^1.10.0",
-    "@actions/exec": "^1.1.1"
+    "@actions/http-client": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.4.2",
+    "esbuild": "^0.18.12",
+    "typescript": "^5.1.6"
   }
 }
