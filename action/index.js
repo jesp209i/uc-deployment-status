@@ -2265,17 +2265,18 @@ function writeCurrentProgress(statusResponse, updateRun = 1, currentMessage) {
   const updateMessages = statusResponse.updateMessage.split("\n");
   const numberOfMessages = updateMessages.length;
   let latestMessages = "";
-  while (numberOfMessages >= currentMessage) {
-    currentMessage++;
-    if (updateMessages[currentMessage] !== void 0) {
-      latestMessages += `
+  while (numberOfMessages > currentMessage) {
+    latestMessages += `
 ${updateMessages[currentMessage]}`;
-    }
+    currentMessage++;
   }
   const latestMessage = updateMessages.pop();
-  (0, import_core.info)(`Update ${updateRun} - ${statusResponse.deploymentState}`);
-  (0, import_core.info)(`Last Modified: ${statusResponse.lastModified}
-Steps: ${latestMessages}`);
-  (0, import_core.info)("----------------------------------------- Sleeping for 15 seconds\n\n");
+  (0, import_core.info)(`Update ${updateRun} - ${statusResponse.deploymentState} - Last Modified: ${statusResponse.lastModified}`);
+  if (latestMessages.length === 0) {
+    (0, import_core.info)(`Running...`);
+  } else {
+    (0, import_core.info)(`Steps: ${latestMessages}`);
+  }
+  (0, import_core.info)("----------------------------------------- Sleeping for 15 seconds\n");
   return currentMessage;
 }
