@@ -54,9 +54,12 @@ function writeCurrentProgress(statusResponse: DeploymentStatusResponse, updateRu
     const numberOfMessages = updateMessages.length;
     let latestMessages: string = '';
     
-    while (numberOfMessages > currentMessage){
+    while (numberOfMessages >= currentMessage){
         currentMessage++;
-        latestMessages += `\n${updateMessages[currentMessage]}`
+
+        if (updateMessages[currentMessage] !== undefined){
+            latestMessages += `\n${updateMessages[currentMessage]}`
+        }
     }
  
     const latestMessage = updateMessages.pop();
@@ -65,5 +68,5 @@ function writeCurrentProgress(statusResponse: DeploymentStatusResponse, updateRu
     info(`Last Modified: ${statusResponse.lastModified}\nSteps: ${latestMessages}`);
     info("----------------------------------------- Sleeping for 15 seconds\n\n");
 
-    return 1;
+    return currentMessage;
 }

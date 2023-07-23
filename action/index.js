@@ -2265,15 +2265,17 @@ function writeCurrentProgress(statusResponse, updateRun = 1, currentMessage) {
   const updateMessages = statusResponse.updateMessage.split("\n");
   const numberOfMessages = updateMessages.length;
   let latestMessages = "";
-  while (numberOfMessages > currentMessage) {
+  while (numberOfMessages >= currentMessage) {
     currentMessage++;
-    latestMessages += `
+    if (updateMessages[currentMessage] !== void 0) {
+      latestMessages += `
 ${updateMessages[currentMessage]}`;
+    }
   }
   const latestMessage = updateMessages.pop();
   (0, import_core.info)(`Update ${updateRun} - ${statusResponse.deploymentState}`);
   (0, import_core.info)(`Last Modified: ${statusResponse.lastModified}
 Steps: ${latestMessages}`);
   (0, import_core.info)("----------------------------------------- Sleeping for 15 seconds\n\n");
-  return 1;
+  return currentMessage;
 }
