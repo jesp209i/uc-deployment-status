@@ -2271,12 +2271,9 @@ ${updateMessages[currentMessage]}`;
     currentMessage++;
   }
   const latestMessage = updateMessages.pop();
-  (0, import_core.info)(`Update ${updateRun} - ${statusResponse.deploymentState} - Last Modified: ${statusResponse.lastModified}`);
-  if (latestMessages.length === 0) {
-    (0, import_core.info)(`Running...`);
-  } else {
-    (0, import_core.info)(`Steps: ${latestMessages}`);
+  (0, import_core.info)(`Update ${updateRun} - ${statusResponse.deploymentState} - Last update: ${statusResponse.lastModified}`);
+  if (latestMessages.length > 0) {
+    (0, import_core.info)(`${latestMessages}`);
   }
-  (0, import_core.info)("----------------------------------------- Sleeping for 15 seconds\n");
   return currentMessage;
 }

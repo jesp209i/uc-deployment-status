@@ -62,13 +62,10 @@ function writeCurrentProgress(statusResponse: DeploymentStatusResponse, updateRu
  
     const latestMessage = updateMessages.pop();
 
-    info(`Update ${updateRun} - ${statusResponse.deploymentState} - Last Modified: ${statusResponse.lastModified}`);
-    if (latestMessages.length === 0){
-        info(`Running...`);
-    } else {
-        info(`Steps: ${latestMessages}`);    
+    info(`Update ${updateRun} - ${statusResponse.deploymentState} - Last update: ${statusResponse.lastModified}`);
+    if (latestMessages.length > 0){
+        info(`${latestMessages}`);    
     }
-    info("----------------------------------------- Sleeping for 15 seconds\n");
 
     return currentMessage;
 }
