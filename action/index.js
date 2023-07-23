@@ -2266,13 +2266,15 @@ function writeCurrentProgress(statusResponse, updateRun = 1, currentMessage) {
   const numberOfMessages = updateMessages.length;
   let latestMessages = "";
   while (numberOfMessages > currentMessage) {
-    latestMessages += `
-${updateMessages[currentMessage]}`;
+    const newline = latestMessages.length === 0 ? `` : `
+`;
+    latestMessages += `${newline}${updateMessages[currentMessage]}`;
     currentMessage++;
   }
   const latestMessage = updateMessages.pop();
-  (0, import_core.info)(`Update ${updateRun} - ${statusResponse.deploymentState} - Last update: ${statusResponse.lastModified}`);
-  if (latestMessages.length > 0) {
+  var hasNewLatestMessages = latestMessages.length > 0;
+  (0, import_core.info)(`Update ${updateRun} - ${hasNewLatestMessages ? statusResponse.deploymentState : `Still running`} - Last update: ${statusResponse.lastModified}`);
+  if (hasNewLatestMessages) {
     (0, import_core.info)(`${latestMessages}`);
   }
   return currentMessage;

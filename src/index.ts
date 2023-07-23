@@ -55,15 +55,18 @@ function writeCurrentProgress(statusResponse: DeploymentStatusResponse, updateRu
     let latestMessages: string = '';
     
     while (numberOfMessages > currentMessage){
-        
-        latestMessages += `\n${updateMessages[currentMessage]}`
+        const newline = latestMessages.length === 0 ? `` : `\n`;
+
+        latestMessages += `${newline}${updateMessages[currentMessage]}`
         currentMessage++;
     }
  
     const latestMessage = updateMessages.pop();
 
-    info(`Update ${updateRun} - ${statusResponse.deploymentState} - Last update: ${statusResponse.lastModified}`);
-    if (latestMessages.length > 0){
+    var hasNewLatestMessages = latestMessages.length > 0;
+
+    info(`Update ${updateRun} - ${hasNewLatestMessages ? statusResponse.deploymentState : `Still running`} - Last update: ${statusResponse.lastModified}`);
+    if (hasNewLatestMessages){
         info(`${latestMessages}`);    
     }
 
