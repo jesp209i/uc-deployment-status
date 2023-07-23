@@ -1,6 +1,5 @@
 import { getInput, info, setFailed, error } from '@actions/core';
-import {HttpClient, MediaTypes, Headers, HttpClientError} from '@actions/http-client';
-import { Response } from './response';
+import { DeploymentStatusResponse, getStatusFromApi } from './getDeploymentStatusApi';
 
 async function run() 
 {
@@ -13,11 +12,14 @@ async function run()
 
     let interval: NodeJS.Timer;
     let timeout: NodeJS.Timer;
+    let currentRun = 1;
+    let messageCursor = 0;
 
     interval = await setInterval( async () =>
     {
         const statusResponse = await getStatusFromApi(url,apiKey);
-        writeCurrentProgress(statusResponse);
+        messageCursor = writeCurrentProgress(statusResponse, currentRun, messageCursor);
+        currentRun++;
         
         if (statusResponse.deploymentState === 'Completed')
         {
@@ -27,7 +29,7 @@ async function run()
         }
         if (statusResponse.deploymentState === 'Failed')
         {
-            info('Deployment Failed');
+            error('Deployment Failed');
             info(`Cloud Deployment Messages:\n${statusResponse.updateMessage}`);
             setFailed("Deployment Failed");
             clearInterval(interval);
@@ -45,31 +47,23 @@ async function run()
 
 run();
 
-async function getStatusFromApi(callUrl: string, apiKey: string): Promise<Response>
+
+function writeCurrentProgress(statusResponse: DeploymentStatusResponse, updateRun: number = 1, currentMessage: number): number
 {
-    const headers = {
-        [Headers.ContentType]: MediaTypes.ApplicationJson,
-        "Umbraco-Api-Key": apiKey
-    };
-
-    const client = new HttpClient();
-    var response = await client.getJson<Response>(callUrl, headers);
-
-    if (response.statusCode === 200 && response.result !== null)
-    {
-        return Promise.resolve(response.result!);
-    }
-
-    return Promise.reject(`Unexpected response coming from server. ${response.statusCode} - ${response.result} `);
-}
-
-function writeCurrentProgress(statusResponse: Response){
-
     const updateMessages = statusResponse.updateMessage.split('\n');
+    const numberOfMessages = updateMessages.length;
+    let latestMessages: string = '';
+    
+    while (numberOfMessages > currentMessage){
+        currentMessage++;
+        latestMessages += `\n${updateMessages[currentMessage]}`
+    }
+ 
     const latestMessage = updateMessages.pop();
 
-    info(`Current Status: ${statusResponse.deploymentState}`);
-    info(`Modified: ${statusResponse.lastModified} - Latest message: ${latestMessage}`);
-    info("\n");
-    info("--------------------------------- Sleeping for 15 seconds --");
+    info(`Update ${updateRun} - ${statusResponse.deploymentState}`);
+    info(`Last Modified: ${statusResponse.lastModified}\nSteps: ${latestMessages}`);
+    info("----------------------------------------- Sleeping for 15 seconds\n\n");
+
+    return 1;
 }

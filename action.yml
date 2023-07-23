@@ -1,12 +1,12 @@
 ---
 name: Get Deployment Status
-description: Hello
+description: Poll the deployment status 
 inputs:
   project-alias:
     description: the project alias for the project you are running a deployment on
     required: true
   deployment-id:
-    description: id linked to the deployemt you want to get status on
+    description: id linked to the deployment you want to get status on
     required: true
   api-key:
     description: key needed to have access to api
@@ -14,7 +14,7 @@ inputs:
   timeout-seconds:
     description: number of seconds to be running before hitting a timeout-seconds
     required: false
-    default: '60'
+    default: '600'
   
 runs:
   using: node16

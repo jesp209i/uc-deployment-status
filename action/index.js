@@ -976,7 +976,7 @@ var require_lib = __commonJS({
     var RetryableHttpVerbs = ["OPTIONS", "GET", "DELETE", "HEAD"];
     var ExponentialBackoffCeiling = 10;
     var ExponentialBackoffTimeSlice = 5;
-    var HttpClientError2 = class _HttpClientError extends Error {
+    var HttpClientError = class _HttpClientError extends Error {
       constructor(message, statusCode) {
         super(message);
         this.name = "HttpClientError";
@@ -984,7 +984,7 @@ var require_lib = __commonJS({
         Object.setPrototypeOf(this, _HttpClientError.prototype);
       }
     };
-    exports.HttpClientError = HttpClientError2;
+    exports.HttpClientError = HttpClientError;
     var HttpClientResponse = class {
       constructor(message) {
         this.message = message;
@@ -1417,7 +1417,7 @@ var require_lib = __commonJS({
               } else {
                 msg = `Failed request: (${statusCode})`;
               }
-              const err = new HttpClientError2(msg, statusCode);
+              const err = new HttpClientError(msg, statusCode);
               err.result = response.result;
               reject(err);
             } else {
@@ -2209,7 +2209,23 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
 
 // src/index.ts
 var import_core = __toESM(require_core());
+
+// src/getDeploymentStatusApi.ts
 var import_http_client = __toESM(require_lib());
+async function getStatusFromApi(callUrl, apiKey) {
+  const headers = {
+    [import_http_client.Headers.ContentType]: import_http_client.MediaTypes.ApplicationJson,
+    "Umbraco-Api-Key": apiKey
+  };
+  const client = new import_http_client.HttpClient();
+  var response = await client.getJson(callUrl, headers);
+  if (response.statusCode === 200 && response.result !== null) {
+    return Promise.resolve(response.result);
+  }
+  return Promise.reject(`Unexpected response coming from server. ${response.statusCode} - ${response.result} `);
+}
+
+// src/index.ts
 async function run() {
   const projectAlias = (0, import_core.getInput)("project-alias");
   const deploymentId = (0, import_core.getInput)("deployment-id");
@@ -2218,16 +2234,19 @@ async function run() {
   const url = `https://api-internal.umbraco.io/projects/${projectAlias}/deployments/${deploymentId}`;
   let interval;
   let timeout;
+  let currentRun = 1;
+  let messageCursor = 0;
   interval = await setInterval(async () => {
     const statusResponse = await getStatusFromApi(url, apiKey);
-    writeCurrentProgress(statusResponse);
+    messageCursor = writeCurrentProgress(statusResponse, currentRun, messageCursor);
+    currentRun++;
     if (statusResponse.deploymentState === "Completed") {
       (0, import_core.info)("Deployment Completed");
       clearInterval(interval);
       clearTimeout(timeout);
     }
     if (statusResponse.deploymentState === "Failed") {
-      (0, import_core.info)("Deployment Failed");
+      (0, import_core.error)("Deployment Failed");
       (0, import_core.info)(`Cloud Deployment Messages:
 ${statusResponse.updateMessage}`);
       (0, import_core.setFailed)("Deployment Failed");
@@ -2242,23 +2261,19 @@ ${statusResponse.updateMessage}`);
   }, +timeoutSeconds * 1e3);
 }
 run();
-async function getStatusFromApi(callUrl, apiKey) {
-  const headers = {
-    [import_http_client.Headers.ContentType]: import_http_client.MediaTypes.ApplicationJson,
-    "Umbraco-Api-Key": apiKey
-  };
-  const client = new import_http_client.HttpClient();
-  var response = await client.getJson(callUrl, headers);
-  if (response.statusCode === 200 && response.result !== null) {
-    return Promise.resolve(response.result);
-  }
-  return Promise.reject(`Unexpected response coming from server. ${response.statusCode} - ${response.result} `);
-}
-function writeCurrentProgress(statusResponse) {
+function writeCurrentProgress(statusResponse, updateRun = 1, currentMessage) {
   const updateMessages = statusResponse.updateMessage.split("\n");
+  const numberOfMessages = updateMessages.length;
+  let latestMessages = "";
+  while (numberOfMessages > currentMessage) {
+    currentMessage++;
+    latestMessages += `
+${updateMessages[currentMessage]}`;
+  }
   const latestMessage = updateMessages.pop();
-  (0, import_core.info)(`Current Status: ${statusResponse.deploymentState}`);
-  (0, import_core.info)(`Modified: ${statusResponse.lastModified} - Latest message: ${latestMessage}`);
-  (0, import_core.info)("\n");
-  (0, import_core.info)("--------------------------------- Sleeping for 15 seconds --");
+  (0, import_core.info)(`Update ${updateRun} - ${statusResponse.deploymentState}`);
+  (0, import_core.info)(`Last Modified: ${statusResponse.lastModified}
+Steps: ${latestMessages}`);
+  (0, import_core.info)("----------------------------------------- Sleeping for 15 seconds\n\n");
+  return 1;
 }
