@@ -18,35 +18,35 @@ async function run()
     info("running");
     interval = await setInterval( async () =>
     {
-        info(currentRun);
-        await getStatusFromApi(apiBaseUrl,apiKey, projectAlias, deploymentId).then(
-            response =>
-            {
-                const statusResponse = response as DeploymentResponse;
-                messageCursor = writeCurrentProgress(statusResponse, currentRun, messageCursor);
-                currentRun++;
-                
-                if (statusResponse.deploymentState === 'Completed')
-                {
-                    info("Deployment Completed");
-                    clearInterval(interval);
-                    clearTimeout(timeout);
-                }
-                if (statusResponse.deploymentState === 'Failed')
-                {
-                    error('Deployment Failed');
-                    info(`Cloud Deployment Messages:\n${statusResponse.updateMessage}`);
-                    setFailed("Deployment Failed");
-                    clearInterval(interval);
-                    clearTimeout(timeout);
-                }
-            }, 
+        info(`${currentRun}`);
+        const response = await getStatusFromApi(apiBaseUrl,apiKey, projectAlias, deploymentId).catch(
             rejected => {
                 clearInterval(interval);
                 clearTimeout(timeout);
                 apiRejectedResponse(rejected);
-                
+                return;
             });
+
+            info(JSON.stringify(response));
+            const statusResponse = response as DeploymentResponse;
+            messageCursor = writeCurrentProgress(statusResponse, currentRun, messageCursor);
+            currentRun++;
+            
+            if (statusResponse.deploymentState === 'Completed')
+            {
+                info("Deployment Completed");
+                clearInterval(interval);
+                clearTimeout(timeout);
+            }
+            if (statusResponse.deploymentState === 'Failed')
+            {
+                error('Deployment Failed');
+                info(`Cloud Deployment Messages:\n${statusResponse.updateMessage}`);
+                setFailed("Deployment Failed");
+                clearInterval(interval);
+                clearTimeout(timeout);
+            }
+
     }, 15000);
     
     timeout = setTimeout(() => {

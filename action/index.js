@@ -11801,32 +11801,32 @@ async function run() {
   let messageCursor = 0;
   (0, import_core.info)("running");
   interval = await setInterval(async () => {
-    (0, import_core.info)(currentRun);
-    await getStatusFromApi(apiBaseUrl, apiKey, projectAlias, deploymentId).then(
-      (response) => {
-        const statusResponse = response;
-        messageCursor = writeCurrentProgress(statusResponse, currentRun, messageCursor);
-        currentRun++;
-        if (statusResponse.deploymentState === "Completed") {
-          (0, import_core.info)("Deployment Completed");
-          clearInterval(interval);
-          clearTimeout(timeout);
-        }
-        if (statusResponse.deploymentState === "Failed") {
-          (0, import_core.error)("Deployment Failed");
-          (0, import_core.info)(`Cloud Deployment Messages:
-${statusResponse.updateMessage}`);
-          (0, import_core.setFailed)("Deployment Failed");
-          clearInterval(interval);
-          clearTimeout(timeout);
-        }
-      },
+    (0, import_core.info)(`${currentRun}`);
+    const response = await getStatusFromApi(apiBaseUrl, apiKey, projectAlias, deploymentId).catch(
       (rejected) => {
         clearInterval(interval);
         clearTimeout(timeout);
         apiRejectedResponse(rejected);
+        return;
       }
     );
+    (0, import_core.info)(JSON.stringify(response));
+    const statusResponse = response;
+    messageCursor = writeCurrentProgress(statusResponse, currentRun, messageCursor);
+    currentRun++;
+    if (statusResponse.deploymentState === "Completed") {
+      (0, import_core.info)("Deployment Completed");
+      clearInterval(interval);
+      clearTimeout(timeout);
+    }
+    if (statusResponse.deploymentState === "Failed") {
+      (0, import_core.error)("Deployment Failed");
+      (0, import_core.info)(`Cloud Deployment Messages:
+${statusResponse.updateMessage}`);
+      (0, import_core.setFailed)("Deployment Failed");
+      clearInterval(interval);
+      clearTimeout(timeout);
+    }
   }, 15e3);
   timeout = setTimeout(() => {
     clearInterval(interval);
