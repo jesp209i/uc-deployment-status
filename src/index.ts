@@ -14,10 +14,12 @@ async function run()
     let timeout: NodeJS.Timer;
     let currentRun = 1;
     let messageCursor = 0;
-
+    
+    info("running");
     interval = await setInterval( async () =>
     {
-        getStatusFromApi(apiBaseUrl,apiKey, projectAlias, deploymentId).then(
+        info(currentRun);
+        await getStatusFromApi(apiBaseUrl,apiKey, projectAlias, deploymentId).then(
             response =>
             {
                 const statusResponse = response as DeploymentResponse;
