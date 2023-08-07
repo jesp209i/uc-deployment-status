@@ -2,6 +2,10 @@
 name: Get Deployment Status
 description: Poll the deployment status 
 inputs:
+  api-base-url:
+    description: the base url you need to interact with api
+    required: false
+    default: 'https://api-internal.umbraco.io'
   project-alias:
     description: the project alias for the project you are running a deployment on
     required: true

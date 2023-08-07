@@ -20,7 +20,7 @@
   "homepage": "https://github.com/jesp209i/uc-deployment-status#readme",
   "dependencies": {
     "@actions/core": "^1.10.0",
-    "@actions/http-client": "^2.1.0"
+    "@jam-test-umbraco/umbraco-cloud-deployment-apiclient": "file:../umbraco-cloud-deployment-api"
   },
   "devDependencies": {
     "@types/node": "^20.4.2",

@@ -1,14 +1,14 @@
-import { getInput, info, setFailed, error } from '@actions/core';
-import { DeploymentStatusResponse, getStatusFromApi } from './getDeploymentStatusApi';
+import { getInput, info, setFailed, error, InputOptions } from '@actions/core';
+import { ApiClient } from '@jam-test-umbraco/umbraco-cloud-deployment-apiclient';
+import { DeploymentPromiseResult, DeploymentResponse, DeploymentProblemDetails } from '@jam-test-umbraco/umbraco-cloud-deployment-apiclient/src/apiTypes';
 
 async function run() 
 {
-    const projectAlias = getInput('project-alias');
-    const deploymentId = getInput('deployment-id');
-    const apiKey = getInput('api-key');
-    const timeoutSeconds = getInput('timeout-seconds');
-
-    const url = `https://api-internal.umbraco.io/projects/${projectAlias}/deployments/${deploymentId}`
+    const apiBaseUrl = getInput('api-base-url', {required: true });
+    const projectAlias = getInput('project-alias', { required: true});
+    const deploymentId = getInput('deployment-id', { required: true});
+    const apiKey = getInput('api-key', { required: true});
+    const timeoutSeconds = getInput('timeout-seconds', { required: true});
 
     let interval: NodeJS.Timer;
     let timeout: NodeJS.Timer;
@@ -17,25 +17,34 @@ async function run()
 
     interval = await setInterval( async () =>
     {
-        const statusResponse = await getStatusFromApi(url,apiKey);
-        messageCursor = writeCurrentProgress(statusResponse, currentRun, messageCursor);
-        currentRun++;
-        
-        if (statusResponse.deploymentState === 'Completed')
-        {
-            info("Deployment Completed");
-            clearInterval(interval);
-            clearTimeout(timeout);
-        }
-        if (statusResponse.deploymentState === 'Failed')
-        {
-            error('Deployment Failed');
-            info(`Cloud Deployment Messages:\n${statusResponse.updateMessage}`);
-            setFailed("Deployment Failed");
-            clearInterval(interval);
-            clearTimeout(timeout);
-        }
-
+        getStatusFromApi(apiBaseUrl,apiKey, projectAlias, deploymentId).then(
+            response =>
+            {
+                const statusResponse = response as DeploymentResponse;
+                messageCursor = writeCurrentProgress(statusResponse, currentRun, messageCursor);
+                currentRun++;
+                
+                if (statusResponse.deploymentState === 'Completed')
+                {
+                    info("Deployment Completed");
+                    clearInterval(interval);
+                    clearTimeout(timeout);
+                }
+                if (statusResponse.deploymentState === 'Failed')
+                {
+                    error('Deployment Failed');
+                    info(`Cloud Deployment Messages:\n${statusResponse.updateMessage}`);
+                    setFailed("Deployment Failed");
+                    clearInterval(interval);
+                    clearTimeout(timeout);
+                }
+            }, 
+            rejected => {
+                clearInterval(interval);
+                clearTimeout(timeout);
+                apiRejectedResponse(rejected);
+                
+            });
     }, 15000);
     
     timeout = setTimeout(() => {
@@ -47,10 +56,16 @@ async function run()
 
 run();
 
-
-function writeCurrentProgress(statusResponse: DeploymentStatusResponse, updateRun: number = 1, currentMessage: number): number
+async function getStatusFromApi(baseUrl: string, apiKey: string, projectAlias: string, deploymentId: string) : Promise<DeploymentPromiseResult>
 {
-    const updateMessages = statusResponse.updateMessage.split('\n');
+    const apiClient = new ApiClient(baseUrl, projectAlias, apiKey);
+
+    return await apiClient.getDeploymentStatus(deploymentId);
+}
+
+function writeCurrentProgress(statusResponse: DeploymentResponse, updateRun: number = 1, currentMessage: number): number
+{
+    const updateMessages = statusResponse.updateMessage!.split('\n');
     const numberOfMessages = updateMessages.length;
     let latestMessages: string = '';
     
@@ -71,4 +86,18 @@ function writeCurrentProgress(statusResponse: DeploymentStatusResponse, updateRu
     }
 
     return currentMessage;
+}
+
+function apiRejectedResponse(rejected: DeploymentPromiseResult) 
+{
+    if (typeof rejected === 'string')
+    {
+        info(`Error while calling ApiClient: ${rejected}`);
+    }
+    if (typeof rejected === 'object')
+    {
+        const problemDetails = rejected as DeploymentProblemDetails;
+        info(`Api returned ${problemDetails.statusCode} details: ${problemDetails.details}`);
+    }
+    setFailed("Error happened during polling for Deployment Status");
 }
