@@ -11764,6 +11764,7 @@ var ApiClient = class {
     return new Promise(() => {
       const req = (0, import_https.request)(url, requestOptions, (res) => resolveResponsePromise(res));
       formRequest.pipe(req);
+      req.on("response", (res) => resolveResponsePromise(res));
     });
   }
   async _request(url, requestVerb, requestBody) {
@@ -11774,6 +11775,7 @@ var ApiClient = class {
     return new Promise(() => {
       const req = (0, import_https.request)(url, requestOptions, (res) => resolveResponsePromise(res));
       req.write(requestBody);
+      req.on("response", (res) => resolveResponsePromise(res));
       req.end();
     });
   }
@@ -11784,6 +11786,7 @@ var ApiClient = class {
     };
     return new Promise(() => {
       const req = (0, import_https.request)(url, requestOptions, (res) => resolveResponsePromise(res));
+      req.on("response", (res) => resolveResponsePromise(res));
     });
   }
 };
