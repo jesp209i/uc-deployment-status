@@ -11799,9 +11799,7 @@ async function run() {
   let timeout;
   let currentRun = 1;
   let messageCursor = 0;
-  (0, import_core.info)("running");
   interval = await setInterval(async () => {
-    (0, import_core.info)(`${currentRun}`);
     const response = await getStatusFromApi(apiBaseUrl, apiKey, projectAlias, deploymentId).catch(
       (rejected) => {
         clearInterval(interval);
@@ -11810,7 +11808,6 @@ async function run() {
         return;
       }
     );
-    (0, import_core.info)(JSON.stringify(response));
     const statusResponse = response;
     messageCursor = writeCurrentProgress(statusResponse, currentRun, messageCursor);
     currentRun++;
